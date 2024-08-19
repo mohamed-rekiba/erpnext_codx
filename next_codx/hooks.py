@@ -6,6 +6,13 @@ app_email = "omneyaeid827@gmail.com"
 app_license = "mit"
 # required_apps = []
 
+doc_events = {
+	"Item": {
+		"on_update": "next_codx.events.item.set_supplier",
+        "after_insert": "next_codx.events.item.set_supplier",
+	}
+}
+
 # Includes in <head>
 # ------------------
 
