@@ -4,13 +4,23 @@ app_publisher = "omneya"
 app_description = "NEXT_CODX Custom App"
 app_email = "omneyaeid827@gmail.com"
 app_license = "mit"
-# required_apps = []
+
+required_apps = ["frappe/erpnext"]
+
+permission_query_conditions = {
+	"Purchase Order": "next_codx.events.purchase_order.get_permission_query_conditions",
+}
 
 doc_events = {
-	"Item": {
-		"on_update": "next_codx.events.item.set_supplier",
-        "after_insert": "next_codx.events.item.set_supplier",
-	}
+	"Sales Order": {
+		"on_submit": "next_codx.events.sales_order.on_submit",
+	},
+}
+
+override_whitelisted_methods = {
+	"ecommerce_integrations.shopify.page.shopify_import_products.shopify_import_products.sync_product": "next_codx.shopify.import_products.custom_sync_product",
+	"ecommerce_integrations.shopify.page.shopify_import_products.shopify_import_products.resync_product" : "next_codx.shopify.import_products.custom_resync_product",
+	"ecommerce_integrations.shopify.page.shopify_import_products.shopify_import_products.import_all_products" : "next_codx.shopify.import_products.custom_import_all_products",
 }
 
 # Includes in <head>

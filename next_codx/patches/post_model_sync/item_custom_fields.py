@@ -15,17 +15,7 @@ def setup_custom_fields():
                 insert_after="stock_uom",
                 print_hide=1,
             )
-        ],
-        "Sales Order Item": [
-            dict(
-                fieldname="supplier",
-                label="Supplier",
-                fieldtype="Link",
-                options="Supplier",
-                fetch_from="item_code.default_supplier",
-                insert_after="delivered_by_supplier",
-            )
-        ],
+        ]
     }
 
     create_custom_fields(custom_fields, ignore_validate=True)
