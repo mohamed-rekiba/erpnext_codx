@@ -5,6 +5,8 @@ app_description = "NEXT_CODX Custom App"
 app_email = "omneyaeid827@gmail.com"
 app_license = "mit"
 
+app_logo_url = "/assets/next_codx/images/logo.jpeg",
+
 required_apps = ["frappe/erpnext"]
 
 permission_query_conditions = {
@@ -13,8 +15,24 @@ permission_query_conditions = {
 
 doc_events = {
 	"Sales Order": {
-		"on_submit": "next_codx.events.sales_order.on_submit",
+		"on_update_after_submit": ["next_codx.events.sales_order.on_submit",],
+        "on_update": "next_codx.events.sales_order.on_submit",
+        "autoname":  "next_codx.events.sales_order.autoname",
 	},
+	"Purchase Order": {
+        "autoname":  "next_codx.events.purchase_order.autoname",
+		"on_update": "next_codx.events.purchase_order.on_update",
+	},
+}
+
+doctype_js = {
+	"Sales Order" : "public/js/sales_order.js",
+	"Purchase Order":  "public/js/purchase_order.js",
+}
+
+doctype_list_js = {
+	"Sales Order" : "public/js/sales_order_list.js",
+    "Purchase Order":  "public/js/purchase_order_list.js",
 }
 
 override_whitelisted_methods = {

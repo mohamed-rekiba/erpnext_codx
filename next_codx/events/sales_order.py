@@ -6,6 +6,64 @@ from frappe.model.mapper import get_mapped_doc
 
 
 def on_submit(self, method=None):
+    self.flags.ignore_version = True
+    old_doc = self.get_doc_before_save()
+    shopify_order_json = self.flags.get("shopiy_order_json")
+    
+    if shopify_order_json:
+        order_data = json.loads(shopify_order_json)
+        financial_status = order_data.get("financial_status")
+        payment_gateway_names = order_data.get("payment_gateway_names")
+        order_status_url = order_data.get("order_status_url")
+        fulfillment_status = order_data.get("fulfillment_status")
+        shopify_order_number = order_data.get("shopify_order_number")
+        
+        if payment_gateway_names and len(payment_gateway_names) > 0:
+            self.payment_type = payment_gateway_names[0]
+        if order_status_url:
+            self.order_status_url = order_status_url
+        if fulfillment_status:
+            self.fulfillment_status = fulfillment_status
+        if shopify_order_number:
+            self.name = shopify_order_number
+        
+        if financial_status == "paid":
+            self.custom_sales_status = "Confirmed"
+            self.financial_status = financial_status
+        
+    # Update name field in the database if docstatus changes to 1
+    if old_doc and old_doc.docstatus != 1 and self.docstatus == 1 and self.custom_sales_status == "Confirmed":
+        # Call function to create purchase orders
+        create_purshase_order(self)
+
+    
+def after_on_submit(self, method=None):
+    if self.shopify_order_number:
+        name = self.shopify_order_number
+    else:
+        name = self.name
+    old_doc = self.get_doc_before_save()
+    if old_doc and old_doc.docstatus != 1 and self.docstatus == 1:
+        frappe.db.sql("""
+                UPDATE `tabSales Order`
+                SET `name` = %s
+                WHERE `name` = %s
+            """, (name, self.name))
+        frappe.db.commit()
+
+
+def autoname(self, method=None):
+    shopify_order_json = self.flags.get("shopiy_order_json")
+    if shopify_order_json:
+        order_data = json.loads(shopify_order_json)
+        shopify_order_number = order_data.get("shopify_order_number")
+        if shopify_order_number:
+            self.name = shopify_order_number
+    if self.shopify_order_number:
+        self.name = self.shopify_order_number
+
+
+def create_purshase_order(self):
     # Pass the items in the Sales Order to the function
     selected_items = [item.as_dict() for item in self.items]
     make_purchase_order_for_default_supplier(self.name, selected_items)
@@ -44,6 +102,7 @@ def make_purchase_order_for_default_supplier(source_name, selected_items):
         target.terms = ""
         target.payment_terms_template = ""
         target.payment_schedule = []
+        target.custom_sales_order = source.name
 
         default_price_list = frappe.get_value("Supplier", supplier, "default_price_list")
         if default_price_list:
@@ -144,4 +203,8 @@ def make_purchase_order_for_default_supplier(source_name, selected_items):
         doc.flags.ignore_exchange_rate = True
         doc.insert()
         frappe.db.commit()
+        # Update Sales Order Items with the Purchase Order reference
+        for item in items:
+            frappe.db.set_value("Sales Order Item", item.get("name"), "purchase_order", doc.name)
+
         purchase_orders.append(doc)
