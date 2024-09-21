@@ -41,6 +41,7 @@ override_whitelisted_methods = {
 	"ecommerce_integrations.shopify.page.shopify_import_products.shopify_import_products.import_all_products" : "next_codx.shopify.import_products.custom_import_all_products",
 }
 
+fixtures = ["Role"]
 # Includes in <head>
 # ------------------
 
